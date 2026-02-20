@@ -12,7 +12,7 @@ app.use(compression());
 
 const allowedOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',')
-  : ['http://localhost:3001'];
+  : ['http://localhost:5173'];
 
 app.use(cors({
   origin: allowedOrigins,
