@@ -1,33 +1,41 @@
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const routes = require('./routes');
 
 const app = express();
 
-// CORS — allow Next.js dev server
+app.use(compression());
+
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',')
+  : ['http://localhost:3001'];
+
 app.use(cors({
-  origin: ['http://localhost:3001', 'http://localhost:3000', 'http://localhost:3002'],
+  origin: allowedOrigins,
   credentials: true,
 }));
 
-// Built-in middleware
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Custom middleware
 app.use(logger);
 
-// Routes
 app.use('/api', routes);
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ success: false, error: 'Route not found' });
 });
 
-// Error handling middleware
 app.use(errorHandler);
 
 module.exports = app;

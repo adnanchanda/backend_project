@@ -1,27 +1,19 @@
-// SoleMate Dashboard Routes — v2 with screen-specific endpoints
 const express = require('express');
 const router = express.Router();
-const {
-    getKpis,
-    getRevenueTrend,
-    getCategorySplit,
-    getTopProducts,
-    getRecentOrders,
-    getInventoryAlerts,
-    getOrdersByChannel,
-    getCustomerDemographics,
-    getGeoRevenue,
-    getPaymentMethods,
-    getSizeDistribution,
-    getOrderStatusBreakdown,
-    getAllOrders,
-    getAllProducts,
-    getAllCustomers,
-    getFullInventory,
-    getSalesSummary,
-} = require('../controllers/dashboardController');
 
-// Overview endpoints
+const { getKpis } = require('../controllers/kpiController');
+const {
+  getRevenueTrend, getCategorySplit, getTopProducts, getRecentOrders,
+  getInventoryAlerts, getOrdersByChannel, getCustomerDemographics,
+  getGeoRevenue, getPaymentMethods, getSizeDistribution, getOrderStatusBreakdown,
+} = require('../controllers/analyticsController');
+const { getAllOrders } = require('../controllers/orderController');
+const { getAllProducts } = require('../controllers/productController');
+const { getAllCustomers } = require('../controllers/customerController');
+const { getFullInventory } = require('../controllers/inventoryController');
+const { getSalesSummary } = require('../controllers/salesController');
+
+// Overview
 router.get('/kpis', getKpis);
 router.get('/revenue-trend', getRevenueTrend);
 router.get('/category-split', getCategorySplit);
@@ -35,11 +27,13 @@ router.get('/payment-methods', getPaymentMethods);
 router.get('/size-distribution', getSizeDistribution);
 router.get('/order-status-breakdown', getOrderStatusBreakdown);
 
-// Screen-specific endpoints
+// Paginated list endpoints
 router.get('/orders-list', getAllOrders);
 router.get('/products-list', getAllProducts);
 router.get('/customers-list', getAllCustomers);
 router.get('/inventory-list', getFullInventory);
+
+// Aggregate
 router.get('/sales-summary', getSalesSummary);
 
 module.exports = router;
