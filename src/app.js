@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerDocument = require('./config/swagger.json');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const routes = require('./routes');
@@ -34,6 +36,12 @@ app.use(logger);
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
+
+// Swagger API docs
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Dashboard API Docs',
+}));
 
 app.use('/api', routes);
 

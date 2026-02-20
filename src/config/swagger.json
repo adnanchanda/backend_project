@@ -1,0 +1,814 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Dashboard API",
+    "description": "Express.js backend API for the SoleMate Dashboard — KPIs, analytics, orders, products, customers, inventory, and sales.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Adnan"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001/api",
+      "description": "Local development"
+    },
+    {
+      "url": "https://backend-project-axtc.onrender.com/api",
+      "description": "Production (Render)"
+    }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Health & status" },
+    { "name": "KPIs", "description": "Key performance indicators" },
+    { "name": "Analytics", "description": "Charts & analytics data" },
+    { "name": "Orders", "description": "Orders management (paginated)" },
+    { "name": "Products", "description": "Products management (paginated)" },
+    { "name": "Customers", "description": "Customers management (paginated)" },
+    { "name": "Inventory", "description": "Inventory management (paginated)" },
+    { "name": "Sales", "description": "Sales summary & reports" }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "API Welcome",
+        "responses": {
+          "200": {
+            "description": "Welcome message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Welcome to the Express.js API" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "responses": {
+          "200": {
+            "description": "Server health status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "status": { "type": "string", "example": "OK" },
+                    "uptime": { "type": "number", "example": 1234.56 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/kpis": {
+      "get": {
+        "tags": ["KPIs"],
+        "summary": "Get all KPIs",
+        "description": "Returns key performance indicators — total revenue, total orders, active customers, average order value, return rate, and stock units.",
+        "parameters": [
+          {
+            "name": "period",
+            "in": "query",
+            "schema": { "type": "string" },
+            "description": "Optional time period filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "KPI data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/KpisData" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/revenue-trend": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Revenue trend (monthly)",
+        "description": "Returns monthly revenue for the last 12 months with target values.",
+        "responses": {
+          "200": {
+            "description": "Revenue trend data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/RevenueTrendItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/category-split": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Revenue by category",
+        "description": "Returns percentage split of revenue across product categories.",
+        "responses": {
+          "200": {
+            "description": "Category split data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CategoryItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/top-products": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Top selling products",
+        "description": "Returns top 6 products by units sold.",
+        "responses": {
+          "200": {
+            "description": "Top products data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TopProduct" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/recent-orders": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Recent orders",
+        "description": "Returns the 10 most recent orders.",
+        "responses": {
+          "200": {
+            "description": "Recent orders data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/RecentOrder" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/inventory-alerts": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Low stock inventory alerts",
+        "description": "Returns up to 8 product variants with stock below 15 units.",
+        "responses": {
+          "200": {
+            "description": "Inventory alerts data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/InventoryAlert" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/orders-by-channel": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Orders by channel",
+        "description": "Returns percentage distribution of orders across sales channels.",
+        "responses": {
+          "200": {
+            "description": "Channel distribution data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/ChannelItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/customer-demographics": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Customer demographics",
+        "description": "Returns age group distribution and gender split of customers.",
+        "responses": {
+          "200": {
+            "description": "Demographics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/DemographicsData" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/geo-revenue": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Revenue by city",
+        "description": "Returns top 6 cities by revenue.",
+        "responses": {
+          "200": {
+            "description": "Geo revenue data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/GeoItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/payment-methods": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Payment methods distribution",
+        "description": "Returns percentage distribution of orders by payment method.",
+        "responses": {
+          "200": {
+            "description": "Payment methods data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/PaymentItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/size-distribution": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Size distribution",
+        "description": "Returns count of items sold per size.",
+        "responses": {
+          "200": {
+            "description": "Size distribution data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/SizeItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/order-status-breakdown": {
+      "get": {
+        "tags": ["Analytics"],
+        "summary": "Order status breakdown",
+        "description": "Returns count of orders grouped by status.",
+        "responses": {
+          "200": {
+            "description": "Status breakdown data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/StatusBreakdownItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/orders-list": {
+      "get": {
+        "tags": ["Orders"],
+        "summary": "Get all orders (paginated)",
+        "description": "Returns a paginated, searchable, filterable list of all orders.",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 }, "description": "Items per page" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search by customer name or order ID" },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["DELIVERED", "SHIPPED", "CONFIRMED", "PENDING", "CANCELLED"] }, "description": "Filter by order status" },
+          { "name": "channel", "in": "query", "schema": { "type": "string", "enum": ["Online Website", "Mobile App", "Retail Store", "Wholesale"] }, "description": "Filter by sales channel" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated orders list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FullOrder" }
+                    },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/products-list": {
+      "get": {
+        "tags": ["Products"],
+        "summary": "Get all products (paginated)",
+        "description": "Returns a paginated, searchable, filterable list of all products with aggregated variant data.",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 }, "description": "Items per page" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search by product name or description" },
+          { "name": "category", "in": "query", "schema": { "type": "string" }, "description": "Filter by product category" },
+          { "name": "stockLevel", "in": "query", "schema": { "type": "string", "enum": ["in_stock", "low", "out"] }, "description": "Filter by stock level" },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["name", "price", "totalStock", "unitsSold", "totalRevenue"], "default": "totalRevenue" }, "description": "Sort field" },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Sort direction" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated products list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FullProduct" }
+                    },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/customers-list": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get all customers (paginated)",
+        "description": "Returns a paginated, searchable, filterable list of all customers with order aggregates.",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 }, "description": "Items per page" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search by name, email, or city" },
+          { "name": "gender", "in": "query", "schema": { "type": "string", "enum": ["Male", "Female"] }, "description": "Filter by gender" },
+          { "name": "city", "in": "query", "schema": { "type": "string" }, "description": "Filter by city" },
+          { "name": "sortBy", "in": "query", "schema": { "type": "string", "enum": ["name", "totalOrders", "totalSpent", "age"], "default": "totalSpent" }, "description": "Sort field" },
+          { "name": "sortOrder", "in": "query", "schema": { "type": "string", "enum": ["asc", "desc"], "default": "desc" }, "description": "Sort direction" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated customers list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FullCustomer" }
+                    },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/inventory-list": {
+      "get": {
+        "tags": ["Inventory"],
+        "summary": "Get full inventory (paginated)",
+        "description": "Returns a paginated, searchable, filterable list of all product variants with stock info.",
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 }, "description": "Page number" },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 }, "description": "Items per page" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Search by product name or SKU" },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["healthy", "low", "critical", "out_of_stock", "All"] }, "description": "Filter by stock status" },
+          { "name": "category", "in": "query", "schema": { "type": "string" }, "description": "Filter by product category" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated inventory list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/InventoryItem" }
+                    },
+                    "pagination": { "$ref": "#/components/schemas/Pagination" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dashboard/sales-summary": {
+      "get": {
+        "tags": ["Sales"],
+        "summary": "Sales summary",
+        "description": "Returns monthly trends, daily trends, category breakdown, and top customers.",
+        "responses": {
+          "200": {
+            "description": "Sales summary data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "$ref": "#/components/schemas/SalesSummary" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "KpiMetric": {
+        "type": "object",
+        "properties": {
+          "value": { "type": "number", "example": 4929822 },
+          "change": { "type": "number", "example": 18.4 },
+          "trend": { "type": "string", "enum": ["up", "down"], "example": "up" },
+          "prefix": { "type": "string", "example": "₹" },
+          "suffix": { "type": "string", "example": "%" }
+        }
+      },
+      "KpisData": {
+        "type": "object",
+        "properties": {
+          "totalRevenue": { "$ref": "#/components/schemas/KpiMetric" },
+          "totalOrders": { "$ref": "#/components/schemas/KpiMetric" },
+          "activeCustomers": { "$ref": "#/components/schemas/KpiMetric" },
+          "avgOrderValue": { "$ref": "#/components/schemas/KpiMetric" },
+          "returnRate": { "$ref": "#/components/schemas/KpiMetric" },
+          "stockUnits": { "$ref": "#/components/schemas/KpiMetric" }
+        }
+      },
+      "RevenueTrendItem": {
+        "type": "object",
+        "properties": {
+          "month": { "type": "string", "example": "Jan" },
+          "revenue": { "type": "number", "example": 450000 },
+          "target": { "type": "number", "example": 405000 }
+        }
+      },
+      "CategoryItem": {
+        "type": "object",
+        "properties": {
+          "category": { "type": "string", "example": "Sneakers" },
+          "value": { "type": "number", "example": 35.2 },
+          "color": { "type": "string", "example": "#6C63FF" }
+        }
+      },
+      "TopProduct": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Air Max 90" },
+          "units": { "type": "integer", "example": 142 },
+          "revenue": { "type": "number", "example": 568000 }
+        }
+      },
+      "RecentOrder": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string", "example": "#SM1A2B3C" },
+          "customer": { "type": "string", "example": "Rahul Sharma" },
+          "product": { "type": "string", "example": "Classic Runner - White / 42" },
+          "amount": { "type": "number", "example": 4999 },
+          "status": { "type": "string", "example": "Delivered" },
+          "date": { "type": "string", "format": "date-time" }
+        }
+      },
+      "InventoryAlert": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "example": "Classic Runner - White / 42" },
+          "sku": { "type": "string", "example": "SM-CR-W-42" },
+          "stock": { "type": "integer", "example": 3 },
+          "reorderLevel": { "type": "integer", "example": 15 },
+          "status": { "type": "string", "enum": ["critical", "low"], "example": "critical" }
+        }
+      },
+      "ChannelItem": {
+        "type": "object",
+        "properties": {
+          "channel": { "type": "string", "example": "Online Website" },
+          "value": { "type": "number", "example": 42.5 },
+          "color": { "type": "string", "example": "#6C63FF" }
+        }
+      },
+      "DemographicsData": {
+        "type": "object",
+        "properties": {
+          "ageGroups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "group": { "type": "string", "example": "25–34" },
+                "male": { "type": "integer", "example": 5 },
+                "female": { "type": "integer", "example": 3 }
+              }
+            }
+          },
+          "genderSplit": {
+            "type": "object",
+            "properties": {
+              "male": { "type": "number", "example": 60 },
+              "female": { "type": "number", "example": 40 }
+            }
+          }
+        }
+      },
+      "GeoItem": {
+        "type": "object",
+        "properties": {
+          "city": { "type": "string", "example": "Mumbai" },
+          "revenue": { "type": "number", "example": 1250000 },
+          "pct": { "type": "number", "example": 100 }
+        }
+      },
+      "PaymentItem": {
+        "type": "object",
+        "properties": {
+          "method": { "type": "string", "example": "UPI" },
+          "value": { "type": "number", "example": 38.5 },
+          "color": { "type": "string", "example": "#6C63FF" }
+        }
+      },
+      "SizeItem": {
+        "type": "object",
+        "properties": {
+          "size": { "type": "string", "example": "42" },
+          "count": { "type": "integer", "example": 85 }
+        }
+      },
+      "StatusBreakdownItem": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "example": "DELIVERED" },
+          "value": { "type": "integer", "example": 150 },
+          "color": { "type": "string", "example": "#00C9A7" }
+        }
+      },
+      "FullOrder": {
+        "type": "object",
+        "properties": {
+          "orderId": { "type": "string" },
+          "customer": { "type": "string" },
+          "email": { "type": "string" },
+          "city": { "type": "string" },
+          "product": { "type": "string" },
+          "quantity": { "type": "integer" },
+          "amount": { "type": "number" },
+          "status": { "type": "string", "enum": ["DELIVERED", "SHIPPED", "CONFIRMED", "PENDING", "CANCELLED"] },
+          "paymentStatus": { "type": "string", "enum": ["PAID", "PENDING", "FAILED", "REFUNDED"] },
+          "channel": { "type": "string" },
+          "paymentMethod": { "type": "string" },
+          "date": { "type": "string", "format": "date", "example": "2026-02-15" },
+          "time": { "type": "string", "example": "14:30" }
+        }
+      },
+      "FullProduct": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "description": { "type": "string" },
+          "category": { "type": "string" },
+          "price": { "type": "number" },
+          "variantCount": { "type": "integer" },
+          "totalStock": { "type": "integer" },
+          "unitsSold": { "type": "integer" },
+          "totalRevenue": { "type": "number" },
+          "avgPrice": { "type": "number" },
+          "createdAt": { "type": "string", "format": "date" },
+          "sizes": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "FullCustomer": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string" },
+          "phone": { "type": "string" },
+          "city": { "type": "string" },
+          "gender": { "type": "string" },
+          "age": { "type": "integer" },
+          "totalOrders": { "type": "integer" },
+          "totalSpent": { "type": "number" },
+          "avgOrderValue": { "type": "number" },
+          "lastOrder": { "type": "string", "format": "date" },
+          "joinedDate": { "type": "string", "format": "date" }
+        }
+      },
+      "InventoryItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "product": { "type": "string" },
+          "category": { "type": "string" },
+          "size": { "type": "string" },
+          "sku": { "type": "string" },
+          "price": { "type": "number" },
+          "stock": { "type": "integer" },
+          "unitsSold": { "type": "integer" },
+          "status": { "type": "string", "enum": ["healthy", "low", "critical", "out_of_stock"] }
+        }
+      },
+      "SalesSummary": {
+        "type": "object",
+        "properties": {
+          "monthly": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": { "type": "string", "example": "Jan 2026" },
+                "orders": { "type": "integer" },
+                "revenue": { "type": "number" },
+                "avgOrder": { "type": "number" }
+              }
+            }
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "day": { "type": "string", "example": "15 Feb" },
+                "orders": { "type": "integer" },
+                "revenue": { "type": "number" }
+              }
+            }
+          },
+          "byCategory": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "category": { "type": "string" },
+                "orders": { "type": "integer" },
+                "revenue": { "type": "number" },
+                "units": { "type": "integer" }
+              }
+            }
+          },
+          "topCustomers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": { "type": "string" },
+                "city": { "type": "string" },
+                "orders": { "type": "integer" },
+                "spent": { "type": "number" }
+              }
+            }
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": { "type": "integer", "example": 1 },
+          "limit": { "type": "integer", "example": 15 },
+          "total": { "type": "integer", "example": 348 },
+          "totalPages": { "type": "integer", "example": 24 }
+        }
+      }
+    }
+  }
+}
